@@ -107,7 +107,7 @@ function N = segmentNuclei(EDF_image, m, s, t1, t2, d)
         end
     end
 
-% Display the original image, noisy image, and filtered image
+% Display the original image and output binary mask
 figure;
 subplot(1,2,1);
 imshow(imageSample, []);

@@ -1,42 +1,58 @@
-function  C = segmentClumps(imgIn, minArea, maxIntensity)
+function segmentedClumps = segmentClumps(EDF_image, nucleusMask, q, q_prime)
 % imgIn = 
-% minArea = 
-% maxIntensity = 
-% C = output clump mask
+% nucleusMask = 
+% q = 
+% q_prime =
+    imageSample = imread(EDF_image);
 
-% this function implements the clump segmentation algorithm from the
-% paper "A framework for nucleus and overlapping cytoplasm..."
-% Miguel Manguerra and Kimiya Mousavi
+    % Converting image to grayscale
+    imageSample = im2gray(imageSample);
 
-% Read image
-im = imread(imgIn);
+    imageSample = double(imageSample);
+    % Learn a Gaussian Mixture Model with two components on pixel intensities
+    pixelValues = double(EDF_image(:));
+    gmm = fitgmdist(imageSample, 2, 'RegularizationValue', 1e-5);
 
-% Learn Gaussian Mixture Model
-num_components = 2;
-options = statset('MaxIter', 1000);
-gmmodel = fitgmdist(double(im(:)), num_components, 'Options', options);
+    % Find the index of the Gaussian corresponding to the background
+    [~, backgroundIdx] = max(gmm.mu);
 
-% Select threshold
-b = gmmodel.mu(1);
-threshold = b + sqrt(2*b)*erfinv(0.06);
+    % Calculate the threshold T
+    b = gmm.mu(backgroundIdx);
+    b_std = sqrt(gmm.Sigma(backgroundIdx));
+    T = b + sqrt(2 * b_std * erfinv(2 * q - 1));
 
-% Binarize image
-im_bin = im2bw(im, threshold/255);
+    % Binarize the image using the threshold T
+    binarizedImage = EDF_image <= T;
 
-% Perform connected component analysis
-cc = bwconncomp(im_bin);
-stats = regionprops(cc, 'Area', 'MeanIntensity');
+    % Perform connected component analysis
+    CC = bwconncomp(binarizedImage);
+    stats = regionprops(CC, EDF_image, 'Area', 'MeanIntensity', 'PixelIdxList');
 
-% Filter out small and bright components
-min_area = 100; % adjust as needed
-max_intensity = gmmodel.mu(2); % adjust as needed
-for i = 1:cc.NumObjects
-    area = stats(i).Area;
-    intensity = stats(i).MeanIntensity;
-    if area < min_area || intensity > max_intensity
-        im_bin(cc.PixelIdxList{i}) = 0;
+    % Remove connected components that do not contain any nucleus
+    % or have a small area or average intensity larger than Q(q_prime)
+    Q_q_prime = b + sqrt(2 * b_std * erfinv(2 * q_prime - 1));
+    segmentedClumps = false(size(EDF_image));
+
+    for i = 1:length(stats)
+        r = stats(i);
+        containsNucleus = any(nucleusMask(r.PixelIdxList{:}));
+        isLargeEnough = r.Area >= 1; % Replace 1 with a suitable minimum area threshold
+        hasLowIntensity = r.MeanIntensity < Q_q_prime;
+
+        if containsNucleus && isLargeEnough && hasLowIntensity
+            segmentedClumps(r.PixelIdxList{:}) = 1;
+        end
     end
-end
 
-% Perform connected component analysis again
-cc = bwconncomp(im_bin);
+% Discard nuclei that do not overlap with any segmented cell clump
+nucleusMask(~segmentedClumps) = 0;
+
+% Display the original image and output binary mask
+figure;
+subplot(1,2,1);
+imshow(imageSample, []);
+title('Original');
+subplot(1,2,2);
+imshow(segmentedClumps, []);
+title('Segmented Clumps');
+end
