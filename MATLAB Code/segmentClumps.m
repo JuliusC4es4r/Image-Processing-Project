@@ -12,16 +12,52 @@ function segmentedClumps = segmentClumps(EDF_image, nucleusMask, q, q_prime)
     binarizedImage = zeros(length(imageSample));
     binarizedImage = double(binarizedImage);
 
-    imageMedian = median(imageSample(:));
-
     for i = 1:length(imageSample)
         for j = 1:length(imageSample)
-            if(imageSample(i,j) < imageMedian)
+            if(imageSample(i,j) < 222)
                 binarizedImage(i,j) = 1;
             end
         end
     end
-    GMM = fitgmdist(imageSample, 5);
+
+    backgroundImage = zeros(length(backgroundImage));
+    backgroundImage = double(backgroundImage);
+
+    foregroundImage = zeros(length(foregroundImage));
+    foregroundImage = double(foregroundImage);
+    
+    for i = 1:length(imageSample)
+        for j = 1:length(imageSample)
+            if(binarizedImage(i,j) == 1)
+                foregroundImage(i,j) = 1;
+            else
+                backgroundImage(i,j) = 1;
+            end
+        end
+    end
+
+    for i = 1:length(imageSample)
+        for j = 1:length(imageSample)
+            if(foregroundImage(i,j) == 1)
+                foregroundImage(i,j) = imageSample(i,j);
+            else
+                backgroundImage(i,j) = imageSample(i,j);
+            end
+        end
+    end
+
+     muBackground = mean(backgroundImage(:));
+     muForeground = mean(foregroundImage(:));
+
+     sigmaBackground = std(backgroundImage(:));
+     sigmaForeground = std(foregroundImage(:));
+
+    rng('default') % For reproducibility
+    rBackground = mvnrnd(muBackground,sigmaBackground,1000);
+    rForeground = mvnrnd(muForeground,sigmaForeground,1000);
+    X = [rBackground; rForeground];
+
+    GMM = fitgmdist(X, 2);
    
 % Display the original image and output binary mask
 figure;
