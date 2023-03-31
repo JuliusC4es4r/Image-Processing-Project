@@ -21,7 +21,9 @@ function cytoplasmMask = segmentCytoplasm(EDF_image, nucleusMask,segmentedClumps
     
 
     imshow(imageSample,[]);
-    axis on;
+    %axis on;
+    h = gca;
+    h.Visible = 'On';
     hold on;
     for i = 1:length(statsNuclei)
         N = statsNuclei(i);
@@ -32,7 +34,7 @@ function cytoplasmMask = segmentCytoplasm(EDF_image, nucleusMask,segmentedClumps
         min_Y = min(nucleiPixels(:,2));
         diff_X = round((max_X-min_X)/2);
         diff_Y = round((max_Y-min_Y)/2);
-        plot(min_X + diff_X, min_Y + diff_Y,  'r*', 'LineWidth', 1);
+        plot(min_Y + diff_Y, min_X + diff_X, 'r*', 'LineWidth', 1);
     end
     
 %     hold on;
