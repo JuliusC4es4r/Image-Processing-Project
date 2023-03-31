@@ -98,17 +98,13 @@ function N = segmentNuclei(EDF_image, m, s, t1, t2, d)
         end
 
         outer_boundary_intensity = outer_boundary_sum/ length(x_values);
-% 
-%         if r_intensity - outer_boundary_intensity < d
-%             N(CC.PixelIdxList{i}) = 0;
-%         end
         if (abs(r_intensity - outer_boundary_intensity)) < d
             N(CC.PixelIdxList{i}) = 0;
         end
     end
 
 [B,L] = bwboundaries(N,'noholes');
-imshow(N,[])
+imshow(imageSample,[])
 hold on
 for k = 1:length(B)
    boundary = B{k};
