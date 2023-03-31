@@ -107,6 +107,14 @@ function N = segmentNuclei(EDF_image, m, s, t1, t2, d)
         end
     end
 
+[B,L] = bwboundaries(N,'noholes');
+imshow(N,[])
+hold on
+for k = 1:length(B)
+   boundary = B{k};
+   plot(boundary(:,2), boundary(:,1), 'g');
+end
+
 % Display the original image and output binary mask
 figure;
 subplot(1,2,1);

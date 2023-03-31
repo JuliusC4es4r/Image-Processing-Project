@@ -1,31 +1,47 @@
-function segmentedClumps = segmentClumps(EDF_image, nucleusMask, q, q_prime)
-% imgIn = 
+function segmentedClumps = segmentClumps(EDF_image, nucleusMask, area, T)
+% EDF_image = 
 % nucleusMask = 
-% q = 
-% q_prime =
+% area = 
+% T =
     imageSample = imread(EDF_image);
 
     % Converting image to grayscale
     imageSample = im2gray(imageSample);
 
     imageSample = double(imageSample);
+
     binarizedImage = zeros(length(imageSample));
     binarizedImage = double(binarizedImage);
 
+    % binarizing image based on threshold
     for i = 1:length(imageSample)
         for j = 1:length(imageSample)
-            if(imageSample(i,j) < 222)
+            if(imageSample(i,j) < T)
                 binarizedImage(i,j) = 1;
             end
         end
     end
+    
+    % removing regions less than size area
+    CC = bwconncomp(binarizedImage);
+    stats = regionprops(CC, 'Area','ConvexHull',"Image");
+    for i = 1:CC.NumObjects
+        r = stats(i);
+        r_size = r.Area;
+        if r_size < area
+        % Remove r
+        binarizedImage(CC.PixelIdxList{i}) = 0;
+        end
+    end
 
-    backgroundImage = zeros(length(backgroundImage));
+    % init empty matrices for 
+    backgroundImage = zeros(length(imageSample));
     backgroundImage = double(backgroundImage);
 
-    foregroundImage = zeros(length(foregroundImage));
+    foregroundImage = zeros(length(imageSample));
     foregroundImage = double(foregroundImage);
     
+    % separating binarized image to foreground and background
     for i = 1:length(imageSample)
         for j = 1:length(imageSample)
             if(binarizedImage(i,j) == 1)
@@ -36,6 +52,7 @@ function segmentedClumps = segmentClumps(EDF_image, nucleusMask, q, q_prime)
         end
     end
 
+    % replacing foreground and background images with original image
     for i = 1:length(imageSample)
         for j = 1:length(imageSample)
             if(foregroundImage(i,j) == 1)
@@ -45,26 +62,38 @@ function segmentedClumps = segmentClumps(EDF_image, nucleusMask, q, q_prime)
             end
         end
     end
+    
+    % subtracting nucleus mask from foreground image
+    for i = 1:length(imageSample)
+        for j = 1:length(imageSample)
+            if(nucleusMask(i,j) == 1)
+                foregroundImage(i,j) = foregroundImage(i,j) - imageSample(i,j);
+                if(foregroundImage(i,j) < 0)
+                    foregroundImage(i,j) = 0;
+                end
+            end
+        end
+    end
+segmentedClumps = foregroundImage;
 
-     muBackground = mean(backgroundImage(:));
-     muForeground = mean(foregroundImage(:));
+% drawing borders for segmented clumps
+[B,L] = bwboundaries(segmentedClumps,'noholes');
+imshow(segmentedClumps,[])
+hold on
+for k = 1:length(B)
+   boundary = B{k};
+   plot(boundary(:,2), boundary(:,1), 'g');
+end
 
-     sigmaBackground = std(backgroundImage(:));
-     sigmaForeground = std(foregroundImage(:));
-
-    rng('default') % For reproducibility
-    rBackground = mvnrnd(muBackground,sigmaBackground,1000);
-    rForeground = mvnrnd(muForeground,sigmaForeground,1000);
-    X = [rBackground; rForeground];
-
-    GMM = fitgmdist(X, 2);
-   
 % Display the original image and output binary mask
 figure;
-subplot(1,2,1);
+subplot(1,3,1);
 imshow(imageSample, []);
 title('Original');
-subplot(1,2,2);
+subplot(1,3,2);
 imshow(segmentedClumps, []);
 title('Segmented Clumps');
+subplot(1,3,3);
+imshow(nucleusMask, []);
+title('Nucleus Mask');
 end

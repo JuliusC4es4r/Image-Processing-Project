@@ -1,4 +1,4 @@
-function segmentedClumps = segmentClumps(EDF_image, nucleusMask, q, q_prime)
+function segmentedClumps = segmentClumps(EDF_image, nucleusMask, area)
 % imgIn = 
 % nucleusMask = 
 % q = 
@@ -9,21 +9,34 @@ function segmentedClumps = segmentClumps(EDF_image, nucleusMask, q, q_prime)
     imageSample = im2gray(imageSample);
 
     imageSample = double(imageSample);
+
     binarizedImage = zeros(length(imageSample));
     binarizedImage = double(binarizedImage);
 
+    % binarizing image based on threshold
     for i = 1:length(imageSample)
         for j = 1:length(imageSample)
-            if(imageSample(i,j) < 222)
+            if(imageSample(i,j) < 218)
                 binarizedImage(i,j) = 1;
             end
         end
     end
 
-    backgroundImage = zeros(length(backgroundImage));
+    CC = bwconncomp(binarizedImage);
+    stats = regionprops(CC, 'Area', 'Solidity', 'Image');
+    for i = 1:CC.NumObjects
+        r = stats(i);
+        r_size = r.Area;
+        if r_size < area
+        % Remove r
+        binarizedImage(CC.PixelIdxList{i}) = 0;
+        end
+    end
+
+    backgroundImage = zeros(length(imageSample));
     backgroundImage = double(backgroundImage);
 
-    foregroundImage = zeros(length(foregroundImage));
+    foregroundImage = zeros(length(imageSample));
     foregroundImage = double(foregroundImage);
     
     for i = 1:length(imageSample)
@@ -36,6 +49,7 @@ function segmentedClumps = segmentClumps(EDF_image, nucleusMask, q, q_prime)
         end
     end
 
+
     for i = 1:length(imageSample)
         for j = 1:length(imageSample)
             if(foregroundImage(i,j) == 1)
@@ -46,16 +60,86 @@ function segmentedClumps = segmentClumps(EDF_image, nucleusMask, q, q_prime)
         end
     end
 
-     muBackground = mean(backgro(:));
+    for i = 1:length(imageSample)
+        for j = 1:length(imageSample)
+            if(nucleusMask(i,j) == 1)
+                foregroundImage(i,j) = foregroundImage(i,j) - imageSample(i,j);
+                if(foregroundImage(i,j) < 0)
+                    foregroundImage(i,j) = 0;
+                end
+            end
+        end
+    end
 
-    GMM = fitgmdist(imageSample, 5);
+
+
+%     % Calculate the threshold T
+%     b = gmm.mu(backgroundIdx);
+%     b_std = sqrt(gmm.Sigma(backgroundIdx));
+%     T = b + (sqrt(2) * b_std * erfinv((2*q) - 1));
+% 
+%     % Binarize the image using the threshold T
+%     binarizedImage = EDF_image <= T;
+% 
+%     % Perform connected component analysis
+%     CC = bwconncomp(binarizedImage);
+%     stats = regionprops(CC, EDF_image, 'Area', 'MeanIntensity', 'PixelIdxList');
+% 
+%     % Remove connected components that do not contain any nucleus
+%     % or have a small area or average intensity larger than Q(q_prime)
+%     Q_q_prime = b + sqrt(2 * b_std * erfinv(2 * q_prime - 1));
+%     segmentedClumps = false(size(EDF_image));
+% 
+%     for i = 1:length(stats)
+%         r = stats(i);
+%         containsNucleus = any(nucleusMask(r.PixelIdxList{:}));
+%         isLargeEnough = r.Area >= 1; % Replace 1 with a suitable minimum area threshold
+%         hasLowIntensity = r.MeanIntensity < Q_q_prime;
+% 
+%         if containsNucleus && isLargeEnough && hasLowIntensity
+%             segmentedClumps(r.PixelIdxList{:}) = 1;
+%         end
+%     end
+% 
+%     % Discard nuclei that do not overlap with any segmented cell clump
+%     nucleusMask(~segmentedClumps) = 0;
+% end
+
+%     muForeground = mean(foregroundImage);
+%     muBackground = mean(backgroundImage);
+%     
+%     mu = [muForeground; muBackground];
+%     
+%     covForeground = cov(foregroundImage);
+%     covBackground = cov(backgroundImage);
+% 
+%     sigma = [covForeground; covBackground];
+% 
+%     gm = gmdistribution(mu,cov)
+%     sigmaBackground = std(backgroundImage);
+%     sigmaForeground = std(foregroundImage);
+%     covariance = cov(sigmaForeground, sigmaBackground);
+%     sigma = cat(1, sigmaBackground, sigmaForeground);
+    
+    
+%     probDensFunc = pdf(imageSample, mu,cov);
+
+%     rng('default') % For reproducibility
+%     rBackground = mvnrnd(muBackground,sigmaBackground,1000);
+%     rForeground = mvnrnd(muForeground,sigmaForeground,1000);
+%     X = [rBackground; rForeground];
+% 
+%     mdist(X, 2);
    
 % Display the original image and output binary mask
 figure;
-subplot(1,2,1);
+subplot(1,3,1);
 imshow(imageSample, []);
 title('Original');
-subplot(1,2,2);
-imshow(segmentedClumps, []);
+subplot(1,3,2);
+imshow(foregroundImage, []);
 title('Segmented Clumps');
+subplot(1,3,3);
+imshow(nucleusMask, []);
+title('Nucleus Mask');
 end
