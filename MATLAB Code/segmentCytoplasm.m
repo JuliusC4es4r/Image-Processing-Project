@@ -41,8 +41,6 @@ function cytoplasmMask = segmentCytoplasm(EDF_image, nucleusMask,segmentedClumps
     % create grid 
     for i = 1:length(centroids_x)
         % Calculate the top left corner coordinates of the square
-        disp(centroids_x(i))
-        disp(centroids_y(i))
         x1 = max(round(centroids_x(i) - W/2), 1);
         y1 = max(round(centroids_y(i) - W/2), 1);
         
@@ -51,10 +49,12 @@ function cytoplasmMask = segmentCytoplasm(EDF_image, nucleusMask,segmentedClumps
         y2 = min(round(centroids_y(i) + W/2), size(imageSample, 1));
 
         % Crop the square portion of the image
-        square = imageSample(y1:y2, x1:x2, :);
+        %square = imageSample(y1:y2, x1:x2, :);
+        square_vector(i) = {imageSample(y1:y2, x1:x2, :)};
 
         rectangle('Position', [x1, y1, x2-x1, y2-y1],'EdgeColor','r', 'LineWidth', 1);
     end
+
 
 
 % normalizedFocusVectors = normalizeFocusVectors(focusMeasures);
