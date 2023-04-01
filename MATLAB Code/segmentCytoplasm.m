@@ -55,6 +55,30 @@ function cytoplasmMask = segmentCytoplasm(EDF_image, nucleusMask,segmentedClumps
         rectangle('Position', [x1, y1, x2-x1, y2-y1],'EdgeColor','r', 'LineWidth', 1);
     end
 
+    
+    for i = 1:length(centroids_x)
+        % grabbing first square from the square vector
+        current_square = square_vector(i);
+        current_square = current_square{1,1};
+
+        % storing center of the square
+        center_x = centroids_x(i);
+        center_y = centroids_y(i);
+
+        for j = 1:length(current_square(1,:))
+            for k = 1:length(current_square(:,1))
+                pixel_x = current_square{j,k};
+                pixel_y = current_square{j,k};
+
+
+
+            end
+        end
+    end
+
+        closeness_vector(i) = 
+
+        
 
 
 % normalizedFocusVectors = normalizeFocusVectors(focusMeasures);
