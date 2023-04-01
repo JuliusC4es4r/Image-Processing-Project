@@ -28,36 +28,37 @@ function cytoplasmMask = segmentCytoplasm(EDF_image, nucleusMask,segmentedClumps
 
     % grabbing centroids of each nuclei and checking if nuclei are in the boundary
     for k = 1:length(B)
-    % emptying the nuclei locations within the current boundary
-    nuclei_within_boundary_x = [];
-    nuclei_within_boundary_y = [];
+
+        % emptying the nuclei locations within the current boundary
+        nuclei_within_boundary_x = [];
+        nuclei_within_boundary_y = [];
 
         for i = 1:length(statsNuclei)
-        boundary = B{k};
-        
-        N = statsNuclei(i);
-        nucleiPixels = N.PixelList;
-
-        max_X = max(nucleiPixels(:,1));
-        min_X = min(nucleiPixels(:,1));
-        max_Y = max(nucleiPixels(:,2));
-        min_Y = min(nucleiPixels(:,2));
-
-        diff_X = round((max_X-min_X)/2);
-        diff_Y = round((max_Y-min_Y)/2);
-
-        centroids_x = min_X + diff_X;
-        centroids_y = min_Y + diff_Y;
-
-        % filters the nuclei that aren't inside the boundaries of the
-        % clumps i.e. nuclei that are outside of clumps aren't included
-        inside = inpolygon(centroids_x, centroids_y, boundary(:,2), boundary(:,1));
+            boundary = B{k};
+            
+            N = statsNuclei(i);
+            nucleiPixels = N.PixelList;
+    
+            max_X = max(nucleiPixels(:,1));
+            min_X = min(nucleiPixels(:,1));
+            max_Y = max(nucleiPixels(:,2));
+            min_Y = min(nucleiPixels(:,2));
+    
+            diff_X = round((max_X-min_X)/2);
+            diff_Y = round((max_Y-min_Y)/2);
+    
+            centroids_x = min_X + diff_X;
+            centroids_y = min_Y + diff_Y;
+    
+            % filters the nuclei that aren't inside the boundaries of the
+            % clumps i.e. nuclei that are outside of clumps aren't included
+            inside = inpolygon(centroids_x, centroids_y, boundary(:,2), boundary(:,1));
             if inside
                 % plots the centroids of all nuclei and the boundaries of
                 % all the clumps
                 plot(centroids_x, centroids_y,  'r*', 'LineWidth', 1);
                 plot(boundary(:,2), boundary(:,1), 'g', 'LineWidth', 1)
-
+    
                 % storing the centroids of all the useful nuclei in a
                 % vector for later use
                 true_centroids_x(i) = min_X + diff_X;
@@ -67,7 +68,7 @@ function cytoplasmMask = segmentCytoplasm(EDF_image, nucleusMask,segmentedClumps
                 % vector for its x and y location
                 nuclei_within_boundary_x = horzcat(nuclei_within_boundary_x,centroids_x);
                 nuclei_within_boundary_y = horzcat(nuclei_within_boundary_y,centroids_y);
-
+    
                 % stores the boundary and its nuclei locations in one
                 % 3d cell matrix
                 nuclei_within_boundary_vector{k,1} = boundary;
@@ -97,28 +98,41 @@ function cytoplasmMask = segmentCytoplasm(EDF_image, nucleusMask,segmentedClumps
         rectangle('Position', [x1, y1, x2-x1, y2-y1],'EdgeColor','b', 'LineWidth', 1);
     end
 
+    % new way of finding closeness and likelihood
+    % between nuclei that exist in the same boundary
+    for i = 1:length(nuclei_within_boundary_vector)
+        % create matrix holding only x and y coordinates of each nucleus in
+        % the boundary
+        nuclei_coordinates = [nuclei_within_boundary_vector{i, 2}; nuclei_within_boundary_vector{i, 3}];
 
-    for i = 1:length(true_centroids_x)
-        % grabbing first square from the square vector
-        current_square_x = square_dim_vector_x(i);
-        current_square_x = current_square_x{1,1};
+        % closeness is a matrix that contains the distance between the
+        % (i,j)th nucleus from nuclei coordinates
+        closeness = pdist2(nuclei_coordinates', nuclei_coordinates');
 
-        current_square_y = square_dim_vector_y(i);
-        current_square_y = current_square_y{1,1};
+    end
 
-        % storing center of the square
-        center_x = true_centroids_x(i);
-        center_y = true_centroids_y(i);
-
-        for j = 1:length(current_square_x)
-            for k = 1:length(current_square_y)
-                pixel_x = current_square_x(j);
-                pixel_y = current_square_y(k);
-
-                closeness(j,k) = sqrt((center_x - pixel_x)^2 + (center_y - pixel_y)^2);
-                likelihood(j,k) = exp(-(closeness(j,k))^2/(2*alpha^2));  
-
-            end
-        end
-
-    end       
+    % create closeness and likelihood vectors
+    % for i = 1:length(true_centroids_x)
+    %     % grabbing first square from the square vector
+    %     current_square_x = square_dim_vector_x(i);
+    %     current_square_x = current_square_x{1,1};
+    % 
+    %     current_square_y = square_dim_vector_y(i);
+    %     current_square_y = current_square_y{1,1};
+    % 
+    %     % storing center of the square
+    %     center_x = true_centroids_x(i);
+    %     center_y = true_centroids_y(i);
+    % 
+    %     for j = 1:length(current_square_x)
+    %         for k = 1:length(current_square_y)
+    %             pixel_x = current_square_x(j);
+    %             pixel_y = current_square_y(k);
+    % 
+    %             closeness(j,k) = sqrt((center_x - pixel_x)^2 + (center_y - pixel_y)^2);
+    %             likelihood(j,k) = exp(-(closeness(j,k))^2/(2*alpha^2));  
+    % 
+    %         end
+    %     end
+    % 
+    % end       
