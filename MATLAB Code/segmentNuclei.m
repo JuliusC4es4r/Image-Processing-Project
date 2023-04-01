@@ -1,11 +1,10 @@
 function N = segmentNuclei(EDF_image, m, s, t1, t2, d)
-% imgIn = 
-% minNucleus = 
-% minSolidity = 
-% t1 =
-% t2 = 
-% minArea = 
-% d = 
+% EDF_image = input image
+% m = minimum area of nucleus
+% s = solidity of nucleus
+% t1 = lower intensity threshold
+% t2 = higher intensity threshold
+% d = boundary intensity difference
 % N = output nuclei mask
 
 % this function implements the nucleus segmentation algorithm from the
