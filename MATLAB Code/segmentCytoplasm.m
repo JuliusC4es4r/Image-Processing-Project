@@ -109,7 +109,12 @@ function cytoplasmMask = segmentCytoplasm(EDF_image, nucleusMask,segmentedClumps
         % (i,j)th nucleus from nuclei coordinates
         closeness = pdist2(nuclei_coordinates', nuclei_coordinates');
 
+        likelihood = exp(-(D.^2)/(2*alpha^2));
+        %idk how to do the summation stuff?
     end
+
+    %coarse refinment
+    
 
     % create closeness and likelihood vectors
     % for i = 1:length(true_centroids_x)

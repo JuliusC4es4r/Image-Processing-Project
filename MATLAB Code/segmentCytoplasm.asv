@@ -101,36 +101,43 @@ function cytoplasmMask = segmentCytoplasm(EDF_image, nucleusMask,segmentedClumps
     % new way of finding closeness and likelihood
     % between nuclei that exist in the same boundary
     for i = 1:length(nuclei_within_boundary_vector)
-        nuclei_in_boundary_x = nuclei_within_boundary_vector{,2}
-        nuclei_in_boundary_y = nuclei_within_boundary_vector{1,3}
-        for k = 1:length(nuclei_within_boundary_vector{1,2})
+        % create matrix holding only x and y coordinates of each nucleus in
+        % the boundary
+        nuclei_coordinates = [nuclei_within_boundary_vector{i, 2}; nuclei_within_boundary_vector{i, 3}];
 
-        end
+        % closeness is a matrix that contains the distance between the
+        % (i,j)th nucleus from nuclei coordinates
+        closeness = pdist2(nuclei_coordinates', nuclei_coordinates');
 
+        likelihood = exp(-(D.^2)/(2*alpha^2));
+        %idk how to do the summation stuff?
     end
 
+    %coarse refinment
+    
+
     % create closeness and likelihood vectors
-    for i = 1:length(true_centroids_x)
-        % grabbing first square from the square vector
-        current_square_x = square_dim_vector_x(i);
-        current_square_x = current_square_x{1,1};
-
-        current_square_y = square_dim_vector_y(i);
-        current_square_y = current_square_y{1,1};
-
-        % storing center of the square
-        center_x = true_centroids_x(i);
-        center_y = true_centroids_y(i);
-
-        for j = 1:length(current_square_x)
-            for k = 1:length(current_square_y)
-                pixel_x = current_square_x(j);
-                pixel_y = current_square_y(k);
-
-                closeness(j,k) = sqrt((center_x - pixel_x)^2 + (center_y - pixel_y)^2);
-                likelihood(j,k) = exp(-(closeness(j,k))^2/(2*alpha^2));  
-
-            end
-        end
-
-    end       
+    % for i = 1:length(true_centroids_x)
+    %     % grabbing first square from the square vector
+    %     current_square_x = square_dim_vector_x(i);
+    %     current_square_x = current_square_x{1,1};
+    % 
+    %     current_square_y = square_dim_vector_y(i);
+    %     current_square_y = current_square_y{1,1};
+    % 
+    %     % storing center of the square
+    %     center_x = true_centroids_x(i);
+    %     center_y = true_centroids_y(i);
+    % 
+    %     for j = 1:length(current_square_x)
+    %         for k = 1:length(current_square_y)
+    %             pixel_x = current_square_x(j);
+    %             pixel_y = current_square_y(k);
+    % 
+    %             closeness(j,k) = sqrt((center_x - pixel_x)^2 + (center_y - pixel_y)^2);
+    %             likelihood(j,k) = exp(-(closeness(j,k))^2/(2*alpha^2));  
+    % 
+    %         end
+    %     end
+    % 
+    % end       
