@@ -49,36 +49,43 @@ function cytoplasmMask = segmentCytoplasm(EDF_image, nucleusMask,segmentedClumps
         y2 = min(round(centroids_y(i) + W/2), size(imageSample, 1));
 
         % Crop the square portion of the image
-        %square = imageSample(y1:y2, x1:x2, :);
-        square_vector(i) = {imageSample(y1:y2, x1:x2, :)};
+        square = imageSample(y1:y2, x1:x2, :);
+      %  square_vector(i) = {imageSample(y1:y2, x1:x2, :)};
+
+        square_dim_vector_x(i) = {x1:x2};
+        square_dim_vector_y(i) = {y1:y2};
 
         rectangle('Position', [x1, y1, x2-x1, y2-y1],'EdgeColor','r', 'LineWidth', 1);
     end
 
-    
+
     for i = 1:length(centroids_x)
         % grabbing first square from the square vector
-        current_square = square_vector(i);
-        current_square = current_square{1,1};
+        current_square_x = square_dim_vector_x(i);
+        current_square_x = current_square_x{1,1};
+
+        current_square_y = square_dim_vector_y(i);
+        current_square_y = current_square_y{1,1};
 
         % storing center of the square
         center_x = centroids_x(i);
         center_y = centroids_y(i);
 
-        for j = 1:length(current_square(1,:))
-            for k = 1:length(current_square(:,1))
-                pixel_x = current_square{j,k};
-                pixel_y = current_square{j,k};
+        for j = 1:length(current_square_x)
+            for k = 1:length(current_square_y)
+                pixel_x = current_square_x(j);
+                pixel_y = current_square_y(k);
 
+                closeness(j,k) = sqrt((center_x - pixel_x)^2 + (center_y - pixel_y)^2);
+                likelihood(j,k) = exp(-(closeness(j,k))^2/(2*alpha^2));  
 
-
+                if(likelihood(j,k) ~= 0)
+                    test(j,k) = imageSample(pixel_x, pixel_y);
+                end
             end
         end
-    end
 
-        closeness_vector(i) = 
-
-        
+    end       
 
 
 % normalizedFocusVectors = normalizeFocusVectors(focusMeasures);
